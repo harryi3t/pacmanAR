@@ -10,28 +10,78 @@ const placer = Scene.root.find('placer');
 const pacman = Scene.root.find('pacman');
 const label = Scene.root.find('label');
 const Patches = require('Patches');
+const arrowUp = Scene.root.find('arrowUp');
+const arrowDown = Scene.root.find('arrowDown');
+const arrowRight = Scene.root.find('arrowRight');
+const arrowLeft = Scene.root.find('arrowLeft');
+const Audio = require('Audio');
+const playbackController = Audio.getPlaybackController('moveSound');
 
-let velocityX = -0.1,
-    velocityY = 0;
+const startTime = Date.now();
+
+let direction = 'left',
+    velocity = 0.025;
 
 function paintNextFrame() {
   let lastX = pacman.transform.x.pinLastValue(),
       lastY = pacman.transform.y.pinLastValue(),
+      newX = lastX,
+      newY = lastY;
 
-      newX = lastX + velocityX,
-      newY = lastY + velocityY;
+  switch (direction) {
+    case 'left':
+      newX = lastX - velocity;
+      break;
+    case 'right':
+      newX = lastX + velocity;
+      break;
+    case 'top':
+      newY = lastY + velocity;
+      break;
+    case 'down':
+      newY = lastY - velocity;
+      break;
+  }
 
   // detect the boundary
   if (newX > 0.5 || newX < -0.5 || newY > 0.5 || newY < -0.5) {
+    playbackController.setPlaying(false);
+    playbackController.setLooping(false);
     return;
+  }
+
+  if (Date.now() - startTime >= 4000) {
+    playbackController.setPlaying(true);
+    playbackController.setLooping(true);
   }
 
   pacman.transform.x = newX;
   pacman.transform.y = newY;
 }
 
+TouchGestures.onTap(arrowLeft).subscribe(() => {
+  console.log('left');
+  direction = 'left';
+});
+
+TouchGestures.onTap(arrowRight).subscribe(() => {
+  console.log('right');
+  direction = 'right';
+});
+
+TouchGestures.onTap(arrowDown).subscribe(() => {
+  console.log('down');
+  direction = 'down';
+});
+
+TouchGestures.onTap(arrowUp).subscribe(() => {
+  console.log('top');
+  direction = 'top';
+});
+
+
 Time.setTimeout(() => {
-  const intervalTimer = Time.setInterval(paintNextFrame, 500);
+  const intervalTimer = Time.setInterval(paintNextFrame, 125);
 
   // function stopIntervalTimer() {
   //   Time.clearInterval(intervalTimer);
@@ -53,44 +103,4 @@ TouchGestures.onPinch(myPlane).subscribe(function (gesture) {
   placer.transform.scaleX = gesture.scale.mul(lastScaleX);
   placer.transform.scaleY = gesture.scale.mul(lastScaleY);
 
-});
-
-TouchGestures.onPan(myPlane).subscribe(function (gesture) {
-  let x = gesture.location.x.pinLastValue(),
-        y = gesture.location.y.pinLastValue();
-
-    const gestureTransform = Scene.unprojectToFocalPlane(gesture.location),
-          x2 = gestureTransform.x.pinLastValue(),
-          y2 = gestureTransform.y.pinLastValue();
-
-    // console.log(`pan 0 (${x},${y}) (${x2},${y2})`)
-
-    const offset = Patches.getVectorValue('offset'),
-          offX = offset.x.pinLastValue(),
-          offY = offset.y.pinLastValue(),
-          pos = Patches.getVectorValue('pos'),
-          posX = pos.x.pinLastValue(),
-          posY = pos.y.pinLastValue()
-
-console.log(`offset 0ms (${offX},${offY})`)
-console.log(`pos 0ms (${posX},${posY})`)
-
-  Time.setTimeout(() => {
-    let x = gesture.location.x.pinLastValue(),
-        y = gesture.location.y.pinLastValue();
-
-    const gestureTransform = Scene.unprojectToFocalPlane(gesture.location),
-          x2 = gestureTransform.x.pinLastValue(),
-          y2 = gestureTransform.y.pinLastValue();
-
-    const offset = Pa
-          offX = offset.x.pinLastValue(),
-          offY = offset.y.pinLastValue(),
-          pos = Patches.getVectorValue('pos'),
-          posX = pos.x.pinLastValue(),
-          posY = pos.y.pinLastValue()
-
-    console.log(`offset 1000ms (${offX},${offY})`)
-    console.log(`pos 1000ms (${posX},${posY})`)
-  }, 1000);
 });
